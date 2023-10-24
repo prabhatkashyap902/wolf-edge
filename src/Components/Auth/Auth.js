@@ -16,6 +16,7 @@ const Auth = () => {
 
     const isLogged=localStorage.getItem(isLoggedIn)
     if(isLogged) {
+      
       return normalizedPath.includes('login') ? <Navigate to={'/'} />:<Outlet/>}
     else  return normalizedPath.includes('login')?<Outlet/>:<Navigate to={'/login'}/>
 

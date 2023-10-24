@@ -3,14 +3,14 @@ import { createSlice } from '@reduxjs/toolkit';
 const DataSlice = createSlice({
   name: 'data',
   initialState: {
-    value: [],
+    contract: [],
   },
   reducers: {
-    saveData: (state, action) => {
-      state.value = action.payload;
+    setContracts: (state, action) => {
+      state.contract = action.payload;
     },
   },
 });
 
-export const { saveData } = DataSlice.actions;
+export const { setContracts } = DataSlice.actions;
 export default DataSlice.reducer;
