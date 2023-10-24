@@ -2,6 +2,7 @@ import React from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import Login from '../Login/Login'
 import Home from '../Home/Home'
+import { isLoggedIn } from '../Utils/Utils'
 
 
 function normalizePath(path) {
@@ -13,10 +14,8 @@ const Auth = () => {
     const normalizedPath = normalizePath(location.pathname)
 
 
-    const isLoggedIn=localStorage.getItem('isLoggedIn')
-    console.log(isLoggedIn)
-    if(isLoggedIn) {
-      console.log("yes")
+    const isLogged=localStorage.getItem(isLoggedIn)
+    if(isLogged) {
       return normalizedPath.includes('login') ? <Navigate to={'/'} />:<Outlet/>}
     else  return normalizedPath.includes('login')?<Outlet/>:<Navigate to={'/login'}/>
 

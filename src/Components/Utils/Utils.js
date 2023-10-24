@@ -1,4 +1,8 @@
-const contarctABI=[
+export const SEPOLIABALANCE= "https://sepolia.etherscan.io/address/"
+export const metamaskId="metamaskId"
+export const isLoggedIn="isLoggedIn"
+
+export const contarctABI=[
 	{
 		"inputs": [
 			{

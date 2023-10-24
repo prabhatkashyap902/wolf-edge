@@ -6,6 +6,8 @@ import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import Login from './Components/Login/Login';
 import Auth from './Components/Auth/Auth';
 import Home from './Components/Home/Home';
+import { Provider } from 'react-redux';
+import { ReduxStore } from './Components/Redux/ReduxStore';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -26,5 +28,7 @@ const router= createBrowserRouter([{
 }])
 
 root.render(
-    <RouterProvider router={router} />
+    <Provider store={ReduxStore}>
+        <RouterProvider router={router} />
+    </Provider>
 );

@@ -3,21 +3,21 @@ import { Web3Provider } from '@ethersproject/providers';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
+import { isLoggedIn, metamaskId } from '../Utils/Utils';
 
 
 const Login = () => {
   const [account, setAccount] = useState(null);
   const navigate =useNavigate()
-  const onLinkButtonClick=()=>{
-    connectWallet();
-    
-  }
+ 
 
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         setAccount(accounts[0]);
+        
+        localStorage.setItem(metamaskId,accounts[0])
       } catch (error) {
         console.error("Failed to connect wallet", error);
       }
@@ -34,7 +34,7 @@ const Login = () => {
         const message = "Please sign this message to prove you own the connected Ethereum address.";
         const signature = await signer.signMessage(message);
         console.log("Signature:", signature);
-        localStorage.setItem('isLoggedIn',true)
+        localStorage.setItem(isLoggedIn,true)
         toast("You are redirecting to home!");
         setTimeout(()=>{
           navigate('/')
