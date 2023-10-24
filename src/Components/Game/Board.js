@@ -61,7 +61,7 @@ function Board({gameId}) {
   return (
     <div className="w-64 h-64 grid grid-cols-3">
       {Array(9).fill(null).map((_, i) => (
-        <div key={i} className="w-1/3 h-1/3">
+        <div key={i} className="w-full h-full">
           {renderSquare(i)}
         </div>
       ))}
