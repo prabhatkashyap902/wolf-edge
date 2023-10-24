@@ -18,14 +18,14 @@ const Home = () => {
 	const getEthBalance = async (address) => {
 		const provider = new  JsonRpcProvider(SEPOLIABALANCE+localStorage.getItem(metamaskId));
 		const balance = await provider.getBalance(address);
+		
 		console.log(balance)
 		return balance
 	};
 
 	useEffect(()=>{
 			// Connect to the Sepolia testnet
-			getEthBalance(localStorage.getItem(metamaskId)).then(setBalance);
-			console.log(balance)
+			console.log(getEthBalance(localStorage.getItem(metamaskId)))
 
 	},[])
 
