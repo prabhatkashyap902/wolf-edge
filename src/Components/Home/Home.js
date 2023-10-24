@@ -1,22 +1,31 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GoDotFill } from 'react-icons/go';
 import { SEPOLIABALANCE, metamaskId } from '../Utils/Utils';
 import { JsonRpcProvider } from '@ethersproject/providers';
-
+import { utils  } from 'ethers';
 
 const Home = () => {
 
 	const navigate=useNavigate()
+	const[balance,setBalance]=useState(null)
 
 	const handleLogout=()=>{
 		localStorage.clear()	
 		navigate('/login')
 	}
+
+	const getEthBalance = async (address) => {
+		const provider = new  JsonRpcProvider(SEPOLIABALANCE+localStorage.getItem(metamaskId));
+		const balance = await provider.getBalance(address);
+		console.log(balance)
+		return balance
+	};
+
 	useEffect(()=>{
 			// Connect to the Sepolia testnet
-			const provider = new  JsonRpcProvider(SEPOLIABALANCE+localStorage.getItem(metamaskId));
-			console.log(provider)
+			getEthBalance(localStorage.getItem(metamaskId)).then(setBalance);
+			console.log(balance)
 
 	},[])
 
