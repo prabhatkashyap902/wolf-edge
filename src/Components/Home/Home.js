@@ -26,19 +26,35 @@ const Home = () => {
 	}
 	
 		useEffect(() => {
-			const provider = new Web3Provider(window.ethereum);
-			const signer = provider.getSigner();
-      setProvider(provider);
-      setSigner(signer);
-			const contract = new ethers.Contract("0x2d7A6432eC7a07888bdC4dCEF0c7B4268eB6433E", contarctABI, signer);
-			setContract(contract);
-			setGenerateRandom(generateRandomNumber())
-			dispatch(setContracts(contract));
+
+
+
+
+			changeMainNetToSepoliaNet().then(()=>{
+				const providers = new Web3Provider(window.ethereum);
+				const signers = providers.getSigner();
+				setProvider(providers);
+				setSigner(signers);
+				const contracts = new ethers.Contract("0x2d7A6432eC7a07888bdC4dCEF0c7B4268eB6433E", contarctABI, signers);
+				setContract(contracts);
+				setGenerateRandom(generateRandomNumber())
+				dispatch(setContracts(contracts));
+				console.log(contracts)})
+			// const providers = new Web3Provider(window.ethereum);
+			// const signers = providers.getSigner();
+            // setProvider(providers);
+            // setSigner(signers);
+			// const contracts = new ethers.Contract("0x2d7A6432eC7a07888bdC4dCEF0c7B4268eB6433E", contarctABI, signers);
+			// setContract(contracts);
+			// setGenerateRandom(generateRandomNumber())
+			// dispatch(setContracts(contracts));
+			// console.log(contracts)
 			
 		}, []);
 
 
 		const startGame = async () => {
+			console.log(contract)
 			if (contract) {
 				try {
 					const transaction = await contract.startGame();
@@ -51,7 +67,46 @@ const Home = () => {
 			}
 		};
 
-		
+		const changeMainNetToSepoliaNet=async()=>{
+			const ethereum = window.ethereum;
+			const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+			console.log(chainId)
+        	if (chainId !== '0xaa36a7'){
+			try {
+				await ethereum.request({
+				  method: 'wallet_switchEthereumChain',
+				  params: [{ chainId: '0xaa36a7' }], // 0xa8d9c is the chainId for Sepolia testnet in hexadecimal
+				});
+			  } catch (switchError) {
+				// This error code indicates that the chain has not been added to MetaMask
+				// In this case, you can ask the user to add it manually.
+				if (switchError.code === 4902) {
+				  try {
+					await ethereum.request({
+					  method: 'wallet_addEthereumChain',
+					  params: [
+						{
+						  chainId: '0xAA36A7', // A 0x-prefixed hexadecimal string
+						  chainName: 'Sepolia Testnet',
+						  nativeCurrency: {
+							name: 'Sepolia Ether',
+							symbol: 'SEP', // 2-6 characters long
+							decimals: 18,
+						  },
+						  rpcUrls: ['https://rpc.sepolia.org/'],
+						  blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+						},
+					  ],
+					});
+				  } catch (addError) {
+					console.error('Error adding Sepolia testnet:', addError);
+				  }
+				}
+				console.error('Error switching to Sepolia testnet:', switchError);
+			  }
+			}
+				  
+		}
 
 		
 		return (
