@@ -5,9 +5,11 @@ import { GoDotFill } from 'react-icons/go';
 import {  Web3Provider, WebSocketProvider } from '@ethersproject/providers';
 import { contarctABI, metamaskId } from '../Utils/Utils';
 import { useDispatch, useSelector } from 'react-redux';
-import { setContracts, setProviders, setSigners, setWebSocketContracts } from '../Redux/DataSlice';
-import { current } from '@reduxjs/toolkit';
+import { setContracts, setPlayer1Address, setPlayer2Address, setProviders, setSigners, setWebSocketContracts } from '../Redux/DataSlice';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Board from '../Game/Board';
+import { Blocks, Oval } from 'react-loader-spinner';
 
 const Home = () => {
 	// const ethers = require("ethers")
@@ -20,7 +22,8 @@ const Home = () => {
   const [contract, setContract] = useState(null);
 
   const [webSocketContract, setWebSocketContract] = useState(null);
-
+	const[submitJoin, setSubmitJoin]=useState(false)
+	const[createGame,setCreateGame]=useState(false)
   
 	const[gameOn,setGameOn]=useState(false)
 	const[gameId,setGameId]=useState(0)
@@ -31,6 +34,22 @@ const Home = () => {
 		localStorage.clear()	
 		navigate('/login')
 	}
+
+	const showError = () => toast("Something went Wrong!");
+	useEffect(() => {
+		const handleBeforeUnload = (e) => {
+		  // Cancel the event as stated by the standard.
+		  e.preventDefault();
+		  // Chrome requires returnValue to be set.
+		  e.returnValue = '';
+		};
+	
+		window.addEventListener('beforeunload', handleBeforeUnload);
+	
+		return () => {
+		  window.removeEventListener('beforeunload', handleBeforeUnload);
+		};
+	  }, []);
 	
 	useEffect(() => {
 		changeMainNetToSepoliaNet().then( async()=>{
@@ -64,6 +83,9 @@ const Home = () => {
 		
 	}, []);
 	const JoinGameOnUI=async()=>{
+		setCreateGame(true)
+		setSubmitJoin(true)
+		if(gameId===0){alert('Enter some value!'); setSubmitJoin(false)}
 		if(contract){
 			console.log(gameId)
 			try{
@@ -73,23 +95,25 @@ const Home = () => {
 					
 				webSocketContract.on('JoinedGame', (gameId, player) => {
 					console.log(`Player ${player} joined game ${gameId}`);
-					
+					setCreateGame(false)
+					setSubmitJoin(false)
+					dispatch(setPlayer2Address(player))
 					setPlayer2Joined(true)
+					setGameOn(true);
+					setComingFrom("join");
+					setPlayer(2);
 				});
 
 				const transaction = await contract.joinGame(gameId,overrides);
 				
 				// Wait for the transaction to be mined and confirmed
 				const receipt = await provider.waitForTransaction(transaction.hash);
-				console.log(receipt)
-				if (receipt.status === 1) {
-					setGameOn(true);
-					setComingFrom("join");
-					setPlayer(2);
-				}
+				
 			}
 			catch(error){
 				console.log(error)
+				setCreateGame(false)
+				setSubmitJoin(false)
 			}
 		}
 	}
@@ -97,6 +121,8 @@ const Home = () => {
 
 		const startGameOnUI = async () => {
 			// console.log(contract)
+			setCreateGame(true)
+			setSubmitJoin(true)
 			if (contract) {
 				try {
 					
@@ -112,7 +138,9 @@ const Home = () => {
 						setGameOn(true);
 						setComingFrom("start");
 						setPlayer(1);
-						
+						dispatch(setPlayer1Address(player))
+						setCreateGame(false)
+						setSubmitJoin(false)
 					  });
 					  
 					const transaction = await contract.startGame(overrides);
@@ -131,6 +159,9 @@ const Home = () => {
 					
 				} catch (error) {
 					console.error("Failed to start game:", error);
+					setCreateGame(false)
+					setSubmitJoin(false)
+					showError()
 				}
 			}
 		};
@@ -192,15 +223,50 @@ const Home = () => {
 			{/**Body */}
 
 			{!gameOn?(<div className='flex-1 flex items-center justify-center'>
+				<ToastContainer
+					position="top-right"
+					autoClose={5000}
+					hideProgressBar={false}
+					newestOnTop={false}
+					closeOnClick
+					rtl={false}
+					pauseOnFocusLoss
+					draggable
+					pauseOnHover
+					theme="dark"
+				/>
 				<div className='rounded-lg shadow-xl p-4 flex flex-col'>
 					<GoDotFill color="#00FF00" className='flex justify-end items-end'/>
 					<div className='item-center justify-center flex'>You are Active</div>
 					<div className='hover:'>Your MetaMask Account id- {localStorage.getItem('metamaskId').substring(0, 6)}...{localStorage.getItem('metamaskId').substring(localStorage.getItem('metamaskId').length - 4)}</div>
-					<div className=''>Join a Game:<input type='number' placeholder="Enter Game Id..." className='text-black px-2 border-gray-500 border' onChange={e=>setGameId(e.target.value)}></input>
+					<div className='flex justify-around'>
+						<div className='flex justify-center text-center'>Join a Game:</div>
+						<input type='number' placeholder="Enter Game Id..." className='text-black px-2 border-gray-500 border rounded-xl' onChange={e=>setGameId(e.target.value)}></input>
 					
-					<div className='item-center justify-center flex  bg-blue-500 text-white m-2 p-2 rounded-xl cursor-pointer ' onClick={JoinGameOnUI}>Submit</div></div>
+						<button className=	{`item-center justify-center flex  bg-blue-500 text-white m-2 px-2 py-1 rounded-md cursor-pointer ${submitJoin&& ' cursor-not-allowed'}`} onClick={JoinGameOnUI} disabled={submitJoin}>
+							{submitJoin?<Oval
+								ariaLabel="loading-indicator"
+								height={25}
+								width={25}
+								strokeWidth={5}
+								strokeWidthSecondary={1}
+								color="blue"
+								secondaryColor="white"
+								/>:"Submit"}
+						</button>
+					</div>
 					<div className='justify-center text-center'>OR</div>
-					<div className='item-center justify-center flex  bg-blue-500 text-white m-2 p-2 rounded-xl cursor-pointer font-bold text-lg' onClick={startGameOnUI}>Start new TicTacToe Game</div>
+					<button className={`item-center justify-center flex  bg-blue-500 text-white m-2 p-2 rounded-xl cursor-pointer font-bold text-lg ${createGame&& ' cursor-not-allowed'}`} onClick={startGameOnUI} disabled={createGame}>
+						{createGame?<><Oval
+							ariaLabel="loading-indicator"
+							height={25}
+							width={25}
+							strokeWidth={5}
+							strokeWidthSecondary={1}
+							color="blue"
+							secondaryColor="white"
+							/></>:`Start new TicTacToe Game`}
+					</button>
 				</div>
 				</div>)
 				:
