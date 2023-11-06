@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Square from "./Square";
 import { useSelector } from 'react-redux';
 
-function Board({gameId,player,comingFrom,secondCome}) {
+function Board({gameId,player,comingFrom,player2Joined}) {
   const [squares, setSquares] = useState(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
   const contract = useSelector((state) => state.data.contract);
@@ -59,12 +59,17 @@ function Board({gameId,player,comingFrom,secondCome}) {
   const status = winner ? `Winner: ${winner}` : `Next Move: ${isXNext ? "X" : "O"}`;
 
   return (
-    <div className="flex flex-col justify-center">
+    <div className="flex flex-col justify-center text-center">
       <div>{comingFrom==="start"?
-              (secondCome===true?(<>Player 2 successfully Joined The game</>):<>Let the Player 2 Join! Send this GameId: {gameId} to Player2</>)
+              (player2Joined===true?(<>Player 2 successfully Joined The game</>)
+                :
+                <>{`Let the Player 2 Join! Send this GameId: ${gameId} to Player2`}</>)
               :
-              (<>Welcome </>)}</div>
+              (<>Welcome Player2 </>)}
+      </div>
+      <div>{`Game No. ${gameId}`}</div>
       <div className="w-64 h-64 grid grid-cols-3">
+        
         {Array(9).fill(null).map((_, i) => (
           <div key={i} className="w-full h-full">
             {renderSquare(i)}

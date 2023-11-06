@@ -8,7 +8,6 @@ import Auth from './Components/Auth/Auth';
 import Home from './Components/Home/Home';
 import { Provider } from 'react-redux';
 import { ReduxStore } from './Components/Redux/ReduxStore';
-import Game from './Components/Game/Game';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -25,10 +24,6 @@ const router= createBrowserRouter([{
       path:'',
       element:<Login/>
     }]
-  },{
-    path:'/game',
-    element:<Game/>
-
   }]
 }])
 

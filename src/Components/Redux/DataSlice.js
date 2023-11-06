@@ -5,7 +5,8 @@ const DataSlice = createSlice({
   initialState: {
     contract: '',
     signers:{},
-    providers:{}
+    providers:{},
+    webSocketContract:''
   },
   reducers: {
     setContracts: (state, action) => {
@@ -17,8 +18,11 @@ const DataSlice = createSlice({
     setProviders: (state, action) => {
       state.providers = action.payload;
     },
+    setWebSocketContracts:(state,action)=>{
+      state.webSocketContract=action.payload
+    }
   },
 });
 
-export const { setContracts,setSigners,setProviders } = DataSlice.actions;
+export const { setContracts,setSigners,setProviders,setWebSocketContracts } = DataSlice.actions;
 export default DataSlice.reducer;

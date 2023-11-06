@@ -5,9 +5,9 @@ import { GoDotFill } from 'react-icons/go';
 import {  Web3Provider, WebSocketProvider } from '@ethersproject/providers';
 import { contarctABI, metamaskId } from '../Utils/Utils';
 import { useDispatch, useSelector } from 'react-redux';
-import { setContracts, setProviders, setSigners } from '../Redux/DataSlice';
+import { setContracts, setProviders, setSigners, setWebSocketContracts } from '../Redux/DataSlice';
 import { current } from '@reduxjs/toolkit';
-import Game from '../Game/Game';
+import Board from '../Game/Board';
 
 const Home = () => {
 	// const ethers = require("ethers")
@@ -18,10 +18,12 @@ const Home = () => {
   const [signer, setSigner] = useState(null);
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
+
+  const [webSocketContract, setWebSocketContract] = useState(null);
+
   
 	const[gameOn,setGameOn]=useState(false)
-	const[generateRandom, setGenerateRandom]=useState(null)
-	const[gameId,setGameId]=useState()
+	const[gameId,setGameId]=useState(0)
 	const[player,setPlayer]=useState(0)
 	const[comingFrom,setComingFrom]=useState("noo")
 	const[player2Joined,setPlayer2Joined]=useState(false)
@@ -40,7 +42,7 @@ const Home = () => {
 
 			const infuraWss = `wss://sepolia.infura.io/ws/v3/79a999fa3be34292b5d14e4c07aa2228`;
 			const websocketProvider = new WebSocketProvider(infuraWss);
-			const webSocketContract = new ethers.Contract("0xae4a69b66f131a4e86da78f83f32c66e75ce329b", contarctABI, websocketProvider);
+			const webSocketContract = new ethers.Contract("0xae4a69b66f131a4e86da78f83f32c66e75ce329b", contarctABI, websocketProvider.getSigner());
 
 			setProvider(provider);
 			dispatch(setProviders(provider))
@@ -48,56 +50,16 @@ const Home = () => {
 			dispatch(setSigners(signer))
 			setContract(contract);
 			dispatch(setContracts(contract));
-			const gameStartedListener = (gameId, player, betAmount) => {
-				console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
-				// setGameOn(true);
-				// setComingFrom("start");
-				// setPlayer(1);
-				// setGameId(gameId);
-			  };
-		  
-			  webSocketContract.on('GameStarted', gameStartedListener);
-			// setWebSocketContract(webSocketContract)
-			// await websocketProvider.on('newHeads', async (blockHeaders) => {
-			// 	for (const blockHeader of blockHeaders) {
-			// 		const blockNumber = blockHeader.number;
-			// 		console.log('New Block:', blockNumber);
-				
-			// 		// Fetch the full block data
-			// 		const block = await websocketProvider.getBlock(blockNumber);
-				
-			// 		// Process the block data
-			// 		console.log(block.transactions);
-			// 	  }
-
-
-			// });
-			// const contractWithListener =contract.connect(websocketProvider);
-			// console.log(contractWithListener.startGame())
-			// await webSocketContract.on('GameStarted',async (from, to, tokenId) => {
-			// 	console.log('Transfer Event:', from, to, tokenId);
-			//   });
-			
-			// contract.events.GameStarted((err, event) => {
-			// 	// handle event
-			// 	console.log(event,err)
-			//   })
-			
-			//await webSocketContract.on('GameStarted', async(gameId, player, betAmount) => {
-				// console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
-				// setGameOn(true);
-				// setComingFrom("start");
-				// setPlayer(1);
-				// setGameId(gameId);
-			//  });
-		
-			//   contractWithListener.on('JoinedGame', (gameId, player) => {
-			// 	console.log(`Player ${player} joined game ${gameId}`);
-			// 	setPlayer2Joined(true);
-			//   });
-
-			console.log()
-			
+			setWebSocketContract(webSocketContract)
+			dispatch(setWebSocketContracts(webSocketContract))
+			webSocketContract.on('JoinedGame', (gameId, player) => {
+				console.log(`Player ${player} joined game ${gameId}`);
+				setPlayer2Joined(true);
+			});
+			webSocketContract.on('GameStarted', (gameId, player, betAmount) => {
+				setGameId(gameId)
+			  });
+						
 		})
 		
 	}, []);
@@ -109,28 +71,12 @@ const Home = () => {
 					value: '10000'
 					};
 					
-					// provider.on('block', (blockNumber) => {
-					// 	console.log('New Block:', blockNumber);
-					// 	contract.on('JoinedGame', (gameId, player) => {
-					// 		console.log(`Player ${player} joined game ${gameId}`);
-							
-					// 		setPlayer2Joined(true)
-					// 	});
-					// });
-					// contract.on('JoinedGame', (gameId, player) => {
-					// 	console.log(`Player ${player} joined game ${gameId}`);
-					// 	// Update state only if the "player" is the second player
-					// 	// You need to define how you determine if the player is the second player
-						
-					// 	  setPlayer2Joined(true);
-					// 	  // Possibly dispatch an action or handle the state update for your UI
-						
-					//   });
-				// contract.on('JoinedGame', (gameId, player) => {
-				// 	console.log(`Player ${player} joined game ${gameId}`);
+				webSocketContract.on('JoinedGame', (gameId, player) => {
+					console.log(`Player ${player} joined game ${gameId}`);
 					
-				// 	setPlayer2Joined(true)
-				// 	});
+					setPlayer2Joined(true)
+				});
+
 				const transaction = await contract.joinGame(gameId,overrides);
 				
 				// Wait for the transaction to be mined and confirmed
@@ -159,14 +105,15 @@ const Home = () => {
 					const overrides = {
 					value: '10000'
 					};
-					// contract.on('GameStarted', (gameId, player, betAmount) => {
-					// 	console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
-					// 	setGameId(gameId)
-					// 	setGameOn(true);
-					// 	setComingFrom("start");
-					// 	setPlayer(1);
+					
+					 webSocketContract.on('GameStarted', (gameId, player, betAmount) => {
+						console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
+						setGameId(gameId)
+						setGameOn(true);
+						setComingFrom("start");
+						setPlayer(1);
 						
-					//   });
+					  });
 					  
 					const transaction = await contract.startGame(overrides);
 					const transactionHash = transaction.hash;
@@ -257,7 +204,7 @@ const Home = () => {
 				</div>
 				</div>)
 				:
-				(<div><Game gameId={gameId} player={player} comingFrom={comingFrom} secondCome={player2Joined}/></div>)
+				(<div className='flex justify-center'><Board gameId={gameId}  player={player} comingFrom={comingFrom} player2Joined={player2Joined}/></div>)
 				
 			}
 		</div>
