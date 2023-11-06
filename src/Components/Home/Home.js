@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ethers } from "ethers";
 import { GoDotFill } from 'react-icons/go';
-import { Web3Provider } from '@ethersproject/providers';
+import {  Web3Provider, WebSocketProvider } from '@ethersproject/providers';
 import { contarctABI, metamaskId } from '../Utils/Utils';
-import Board from '../Game/Board';
 import { useDispatch, useSelector } from 'react-redux';
-import { setContracts } from '../Redux/DataSlice';
-import { generateRandomNumber } from '../Utils/Random';
+import { setContracts, setProviders, setSigners } from '../Redux/DataSlice';
+import { current } from '@reduxjs/toolkit';
+import Game from '../Game/Game';
 
 const Home = () => {
-	const ethers = require("ethers")
+	// const ethers = require("ethers")
 	const navigate=useNavigate()
 	const[balance,setBalance]=useState(null)
 	const dispatch = useDispatch(); 
@@ -17,50 +18,170 @@ const Home = () => {
   const [signer, setSigner] = useState(null);
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
+  
 	const[gameOn,setGameOn]=useState(false)
 	const[generateRandom, setGenerateRandom]=useState(null)
-
+	const[gameId,setGameId]=useState()
+	const[player,setPlayer]=useState(0)
+	const[comingFrom,setComingFrom]=useState("noo")
+	const[player2Joined,setPlayer2Joined]=useState(false)
 	const handleLogout=()=>{
 		localStorage.clear()	
 		navigate('/login')
 	}
 	
-		useEffect(() => {
+	useEffect(() => {
+		changeMainNetToSepoliaNet().then( async()=>{
+
+						
+			const provider = new Web3Provider(window.ethereum)
+			const signer = provider.getSigner();
+			const contract = new ethers.Contract("0xae4a69b66f131a4e86da78f83f32c66e75ce329b", contarctABI, signer);
+
+			const infuraWss = `wss://sepolia.infura.io/ws/v3/79a999fa3be34292b5d14e4c07aa2228`;
+			const websocketProvider = new WebSocketProvider(infuraWss);
+			const webSocketContract = new ethers.Contract("0xae4a69b66f131a4e86da78f83f32c66e75ce329b", contarctABI, websocketProvider);
+
+			setProvider(provider);
+			dispatch(setProviders(provider))
+			setSigner(signer);
+			dispatch(setSigners(signer))
+			setContract(contract);
+			dispatch(setContracts(contract));
+			const gameStartedListener = (gameId, player, betAmount) => {
+				console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
+				// setGameOn(true);
+				// setComingFrom("start");
+				// setPlayer(1);
+				// setGameId(gameId);
+			  };
+		  
+			  webSocketContract.on('GameStarted', gameStartedListener);
+			// setWebSocketContract(webSocketContract)
+			// await websocketProvider.on('newHeads', async (blockHeaders) => {
+			// 	for (const blockHeader of blockHeaders) {
+			// 		const blockNumber = blockHeader.number;
+			// 		console.log('New Block:', blockNumber);
+				
+			// 		// Fetch the full block data
+			// 		const block = await websocketProvider.getBlock(blockNumber);
+				
+			// 		// Process the block data
+			// 		console.log(block.transactions);
+			// 	  }
 
 
-
-
-			changeMainNetToSepoliaNet().then(()=>{
-				const providers = new Web3Provider(window.ethereum);
-				const signers = providers.getSigner();
-				setProvider(providers);
-				setSigner(signers);
-				const contracts = new ethers.Contract("0x2d7A6432eC7a07888bdC4dCEF0c7B4268eB6433E", contarctABI, signers);
-				setContract(contracts);
-				setGenerateRandom(generateRandomNumber())
-				dispatch(setContracts(contracts));
-				console.log(contracts)})
-			// const providers = new Web3Provider(window.ethereum);
-			// const signers = providers.getSigner();
-            // setProvider(providers);
-            // setSigner(signers);
-			// const contracts = new ethers.Contract("0x2d7A6432eC7a07888bdC4dCEF0c7B4268eB6433E", contarctABI, signers);
-			// setContract(contracts);
-			// setGenerateRandom(generateRandomNumber())
-			// dispatch(setContracts(contracts));
-			// console.log(contracts)
+			// });
+			// const contractWithListener =contract.connect(websocketProvider);
+			// console.log(contractWithListener.startGame())
+			// await webSocketContract.on('GameStarted',async (from, to, tokenId) => {
+			// 	console.log('Transfer Event:', from, to, tokenId);
+			//   });
 			
-		}, []);
+			// contract.events.GameStarted((err, event) => {
+			// 	// handle event
+			// 	console.log(event,err)
+			//   })
+			
+			//await webSocketContract.on('GameStarted', async(gameId, player, betAmount) => {
+				// console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
+				// setGameOn(true);
+				// setComingFrom("start");
+				// setPlayer(1);
+				// setGameId(gameId);
+			//  });
+		
+			//   contractWithListener.on('JoinedGame', (gameId, player) => {
+			// 	console.log(`Player ${player} joined game ${gameId}`);
+			// 	setPlayer2Joined(true);
+			//   });
+
+			console.log()
+			
+		})
+		
+	}, []);
+	const JoinGameOnUI=async()=>{
+		if(contract){
+			console.log(gameId)
+			try{
+				const overrides = {
+					value: '10000'
+					};
+					
+					// provider.on('block', (blockNumber) => {
+					// 	console.log('New Block:', blockNumber);
+					// 	contract.on('JoinedGame', (gameId, player) => {
+					// 		console.log(`Player ${player} joined game ${gameId}`);
+							
+					// 		setPlayer2Joined(true)
+					// 	});
+					// });
+					// contract.on('JoinedGame', (gameId, player) => {
+					// 	console.log(`Player ${player} joined game ${gameId}`);
+					// 	// Update state only if the "player" is the second player
+					// 	// You need to define how you determine if the player is the second player
+						
+					// 	  setPlayer2Joined(true);
+					// 	  // Possibly dispatch an action or handle the state update for your UI
+						
+					//   });
+				// contract.on('JoinedGame', (gameId, player) => {
+				// 	console.log(`Player ${player} joined game ${gameId}`);
+					
+				// 	setPlayer2Joined(true)
+				// 	});
+				const transaction = await contract.joinGame(gameId,overrides);
+				
+				// Wait for the transaction to be mined and confirmed
+				const receipt = await provider.waitForTransaction(transaction.hash);
+				console.log(receipt)
+				if (receipt.status === 1) {
+					setGameOn(true);
+					setComingFrom("join");
+					setPlayer(2);
+				}
+			}
+			catch(error){
+				console.log(error)
+			}
+		}
+	}
 
 
-		const startGame = async () => {
-			console.log(contract)
+		const startGameOnUI = async () => {
+			// console.log(contract)
 			if (contract) {
 				try {
-					const transaction = await contract.startGame();
-					setGameOn(true)
-					await transaction.wait();
+					
+
+					 
+					const overrides = {
+					value: '10000'
+					};
+					// contract.on('GameStarted', (gameId, player, betAmount) => {
+					// 	console.log(`Game started: Game ID: ${gameId}, Player: ${player}, Bet Amount: ${betAmount}`);
+					// 	setGameId(gameId)
+					// 	setGameOn(true);
+					// 	setComingFrom("start");
+					// 	setPlayer(1);
+						
+					//   });
+					  
+					const transaction = await contract.startGame(overrides);
+					const transactionHash = transaction.hash;
+					// setGameOn(true)
+					
+					const receipt = await provider.waitForTransaction(transactionHash, 1, 150000);	
+					
+					console.log( receipt);
+					//  Transaction details
+					console.log('Transaction hash:', receipt.transactionHash);
+					console.log('Block hash:', receipt.blockHash);
+					console.log('Block number:', receipt.blockNumber);
+					console.log('Gas used:', receipt.gasUsed.toString());
 					console.log("Game started!");
+					
 				} catch (error) {
 					console.error("Failed to start game:", error);
 				}
@@ -71,7 +192,7 @@ const Home = () => {
 			const ethereum = window.ethereum;
 			const chainId = await window.ethereum.request({ method: 'eth_chainId' });
 			console.log(chainId)
-        	if (chainId !== '0xaa36a7'){
+			if (chainId !== '0xaa36a7'){
 			try {
 				await ethereum.request({
 				  method: 'wallet_switchEthereumChain',
@@ -93,7 +214,7 @@ const Home = () => {
 							symbol: 'SEP', // 2-6 characters long
 							decimals: 18,
 						  },
-						  rpcUrls: ['https://rpc.sepolia.org/'],
+						  rpcUrls: ['wss://ethereum-sepolia.publicnode.com'],
 						  blockExplorerUrls: ['https://sepolia.etherscan.io/'],
 						},
 					  ],
@@ -128,14 +249,16 @@ const Home = () => {
 					<GoDotFill color="#00FF00" className='flex justify-end items-end'/>
 					<div className='item-center justify-center flex'>You are Active</div>
 					<div className='hover:'>Your MetaMask Account id- {localStorage.getItem('metamaskId').substring(0, 6)}...{localStorage.getItem('metamaskId').substring(localStorage.getItem('metamaskId').length - 4)}</div>
-					<div className='item-center justify-center flex  bg-blue-500 text-white m-2 p-2 rounded-xl cursor-pointer font-bold text-lg' onClick={startGame}>Play TicTacToe Game</div>
+					<div className=''>Join a Game:<input type='number' placeholder="Enter Game Id..." className='text-black px-2 border-gray-500 border' onChange={e=>setGameId(e.target.value)}></input>
+					
+					<div className='item-center justify-center flex  bg-blue-500 text-white m-2 p-2 rounded-xl cursor-pointer ' onClick={JoinGameOnUI}>Submit</div></div>
+					<div className='justify-center text-center'>OR</div>
+					<div className='item-center justify-center flex  bg-blue-500 text-white m-2 p-2 rounded-xl cursor-pointer font-bold text-lg' onClick={startGameOnUI}>Start new TicTacToe Game</div>
 				</div>
 				</div>)
 				:
-				<div className='flex-1 flex items-center justify-center'>
-
-					<Board gameId={generateRandom}/>
-				</div>
+				(<div><Game gameId={gameId} player={player} comingFrom={comingFrom} secondCome={player2Joined}/></div>)
+				
 			}
 		</div>
 	)

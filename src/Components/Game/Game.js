@@ -1,8 +1,13 @@
 import React from 'react'
+import Board from './Board'
 
-const Game = () => {
+const Game = ({gameId,player,comingFrom}) => {
+  console.log(gameId,player,comingFrom)
   return (
-    <div>Game</div>
+    <div className='flex-1 flex items-center justify-center'>
+
+    <Board gameId={gameId}  player={player} comingFrom={comingFrom}/>
+  </div>
   )
 }
 

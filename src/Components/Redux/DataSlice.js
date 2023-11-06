@@ -3,14 +3,22 @@ import { createSlice } from '@reduxjs/toolkit';
 const DataSlice = createSlice({
   name: 'data',
   initialState: {
-    contract: [],
+    contract: '',
+    signers:{},
+    providers:{}
   },
   reducers: {
     setContracts: (state, action) => {
       state.contract = action.payload;
     },
+    setSigners: (state, action) => {
+      state.signers = action.payload;
+    },
+    setProviders: (state, action) => {
+      state.providers = action.payload;
+    },
   },
 });
 
-export const { setContracts } = DataSlice.actions;
+export const { setContracts,setSigners,setProviders } = DataSlice.actions;
 export default DataSlice.reducer;
