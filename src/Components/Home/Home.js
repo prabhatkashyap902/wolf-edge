@@ -16,6 +16,9 @@ const Home = () => {
 	const navigate=useNavigate()
 	const[balance,setBalance]=useState(null)
 	const dispatch = useDispatch(); 
+	
+	const player1Address=useSelector((state)=>state.data.player1Address)
+	const player2Address=useSelector((state)=>state.data.player2Address)
 
   const [signer, setSigner] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -34,6 +37,10 @@ const Home = () => {
 		localStorage.clear()	
 		navigate('/login')
 	}
+	async function getPlayerOneAddress(gameId) {
+		const game = await contract.games(gameId);
+		return game.playerOne;
+	  }
 
 	const showError = () => toast("Something went Wrong!");
 	useEffect(() => {
@@ -52,6 +59,8 @@ const Home = () => {
 	  }, []);
 	
 	useEffect(() => {
+		console.log(player1Address)
+		console.log(player2Address)
 		changeMainNetToSepoliaNet().then( async()=>{
 
 						
@@ -74,6 +83,7 @@ const Home = () => {
 			webSocketContract.on('JoinedGame', (gameId, player) => {
 				console.log(`Player ${player} joined game ${gameId}`);
 				setPlayer2Joined(true);
+			
 			});
 			webSocketContract.on('GameStarted', (gameId, player, betAmount) => {
 				setGameId(gameId)
@@ -81,7 +91,7 @@ const Home = () => {
 						
 		})
 		
-	}, []);
+	}, [player1Address,player2Address]);
 	const JoinGameOnUI=async()=>{
 		setCreateGame(true)
 		setSubmitJoin(true)
@@ -93,8 +103,10 @@ const Home = () => {
 					value: '10000'
 					};
 					
-				webSocketContract.on('JoinedGame', (gameId, player) => {
+				webSocketContract.on('JoinedGame', async(gameId, player) => {
 					console.log(`Player ${player} joined game ${gameId}`);
+					const playerOneAddress = await getPlayerOneAddress(gameId);
+					dispatch(setPlayer1Address(playerOneAddress))
 					setCreateGame(false)
 					setSubmitJoin(false)
 					dispatch(setPlayer2Address(player))
@@ -102,6 +114,7 @@ const Home = () => {
 					setGameOn(true);
 					setComingFrom("join");
 					setPlayer(2);
+					// console.log()
 				});
 
 				const transaction = await contract.joinGame(gameId,overrides);
@@ -169,7 +182,7 @@ const Home = () => {
 		const changeMainNetToSepoliaNet=async()=>{
 			const ethereum = window.ethereum;
 			const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-			console.log(chainId)
+			// console.log(chainId)
 			if (chainId !== '0xaa36a7'){
 			try {
 				await ethereum.request({

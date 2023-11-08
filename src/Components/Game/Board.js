@@ -1,83 +1,162 @@
 import React, { useEffect, useState } from "react";
 import Square from "./Square";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setPlayer1Address, setPlayer2Address } from "../Redux/DataSlice";
 
 function Board({gameId,player,comingFrom,player2Joined}) {
-	const [squares, setSquares] = useState(Array(9).fill(null));
-	const [isXNext, setIsXNext] = useState(true);
+	const [squares, setSquares] = useState(Array(9).fill(null));	
 	const contract = useSelector((state) => state.data.contract);
 	const provider=useSelector((state)=>state.data.provider)
 	const webSocketContract = useSelector((state) => state.data.webSocketContract);
 	const player1Address=useSelector((state)=>state.data.player1Address)
 	const player2Address=useSelector((state)=>state.data.player2Address)
 	const[player1Play,setPlayer1Play]=useState(false)
+	const[rounds, setRounds]=useState(0)
+	const[whichPlayer,setWhichPlayer]=useState('')
+	const[makeUnClickable,setMakeUnClickable]=useState(false)
 	
-
-
+const dispatch=useDispatch()
 	useEffect(()=>{
-		webSocketContract.on('JoinedGame', (gameId, player2) => {
+		
+		console.log(comingFrom)
+		if(comingFrom==='start')setWhichPlayer(player1Address)
+		else setWhichPlayer(player2Address)
+
+		const handleJoinedGame = (gameId, player2) => {
 			console.log("BoardJoinedGame")
-			setPlayer1Play(false)
-		});
-		webSocketContract.on('GameStarted', (gameId, player1, betAmount) => {
+			console.log(player2)
+			dispatch(setPlayer2Address(player2))
+			dispatch(setPlayer1Address(player1Address))
+			
+			console.log(player1Address)
+			console.log(player2Address)
+			console.log(whichPlayer)
+			
+		}
+		const handleGameStarted = (gameId, player1, betAmount) => {
 			console.log("BoardGameStarted")
-			setPlayer1Play(true)
-		});
-		webSocketContract.on('MadeMove', (gameId,x,y, player) => {
-			console.log("BoardMadeMove")
-			console.log(`MadeMove of gameID ${gameId} of x:${x} and y:${y} `)
+			// setPlayer1Play(true)
+			console.log(player1)
+			// setWhichPlayer(player1)
+		}
+		const handleMadeMove= async(gameId,x,y, player) => {
+			// console.log("BoardMadeMove")
+			// console.log(`MadeMove of gameID ${gameId} of x:${x} and y:${y} by ${player}`)
+			// console.log(whichPlayer)
+			// console.log(player1Address)
+			// console.log(player2Address)
+			// Update the board state based on the move made
+      // const newSquares = [...squares];
+			setSquares((prevSquares) => {
+				// Create a new array from the previous squares
+				const newSquares = [...prevSquares];
+				// Calculate the index in the squares array
+				const index = Number(x) * 3 + Number(y);
+				// Update the square with "X" or "O"
+				newSquares[index] = player === player1Address ? "X" : "O";
+				// Return the updated squares array
+				return newSquares;
+			});
+      // setSquares(newSquares);
+
+      // Toggle whichPlayer based on the move made
+      setWhichPlayer(player === player1Address ? player2Address : player1Address);
+      // setIsXNext(player !== player1Address); // If player 1 made a move, it's now player 2's turn, and vice versa
+      setMakeUnClickable(false); // Re-enable clicking after the move is handled
+    
 			
-		});
-		webSocketContract.on('HaveWinner', (gameId, winner, reward) => {
-			console.log("BoardHaveWinner")
 			
-		});
-		webSocketContract.on('GameCancelled',(gameId,player1)=>{
-			console.log("BoardGameCancelled")
-		});
+		};
+
+		webSocketContract.on('JoinedGame',handleJoinedGame)
+		webSocketContract.on('GameStarted',handleGameStarted)
+		webSocketContract.on('MadeMove', handleMadeMove);
+		
+		// webSocketContract.on('HaveWinner', (gameId, winner, reward) => {
+		// 	console.log("BoardHaveWinner")
+			
+		// });
+		// webSocketContract.on('GameCancelled',(gameId,player1)=>{
+		// 	console.log("BoardGameCancelled")
+		// });
 				
 
-
+		return () => {
+			webSocketContract.off('JoinedGame', handleJoinedGame);
+			webSocketContract.off('GameStarted', handleGameStarted);
+			webSocketContract.off('MadeMove', handleMadeMove);
+			// ... unsubscribe from other events ...
+		};
 
 	},[])
 
 
-	const makeMove = async (x,y) => {
+	const makeMove = async (x,y,squares) => {
 		console.log(x,y)
 		if (contract) {
 			try {
-				const overrides = {
-					value: '10000'
-					};
-
-				webSocketContract.on('MadeMove', (gameId,x,y, player) => {
-					console.log("BoardMadeMove")
-					console.log(`MadeMove of gameID ${gameId} of x:${x} and y:${y} `)
+				
+			
+				// webSocketContract.on('MadeMove', (gameId,x,y, player) => {
+				// 	console.log("BoardMadeMove")
+				// 	console.log(`MadeMove of gameID ${gameId} of x:${x} and y:${y} `)
+				// 	if(player==player1Address){
+						
+				// 		setWhichPlayer(player2Address)
+						
+				// 		setSquares(squares);
+				// 	}
+				// 	else{
+				// 		setWhichPlayer(player1Address)
+						
+				// 		setSquares(squares);
+				// 	}
+				// 		console.log(squares)
+				// 		setSquares(squares);
+				// 		setMakeUnClickable(false)
 					
-				});
-				const transaction = await contract.makeMove(x,y,gameId, overrides);
-			 
-				const receipt = await provider.waitForTransaction(transaction.hash);
-				console.log(receipt)
-				if (receipt.status === 1) {
+				// });
+				const transaction = await contract.makeMove(x,y,gameId);
+				// const receipt = await provider.waitForTransaction(transaction.hash);
+				console.log(`Transaction mined with ${transaction} confirmations`);
 					
-				}
+				
 			} catch (error) {
 				console.error("Failed to make move:", error);
+				setMakeUnClickable(false)
 			}
 		}
 	};
 
-	const handleClick = (i) => {
-		console.log(i)
+	
+	const handleClick =  (i) => {
+		setMakeUnClickable(true)
+		console.log(i);
 		const newSquares = squares.slice();
+		console.log(`Current player: ${whichPlayer}`);
+		console.log(`Player 1 Address: ${player1Address}`);
+		console.log(`Player 2 Address: ${player2Address}`);
+		// Check if the game is over or the square is already taken
+		if(player1Address===''||player2Address===''){ console.log("wow");setMakeUnClickable(false);return;}
 		if (calculateWinner(newSquares) || newSquares[i]) {
+			console.log("Oops block already filled!")
+			setMakeUnClickable(false);
 			return;
 		}
-		newSquares[i] = isXNext ? "X" : "O";
-		makeMove(Math.ceil(i/3),i%3)
-		setSquares(newSquares);
-		setIsXNext(!isXNext);
+
+
+
+		if (!squares[i]) {
+      try {
+        setMakeUnClickable(true); // Disable further clicks until the move is processed
+        makeMove(Math.floor(i / 3), i % 3, squares);
+      } catch (error) {
+        console.error("Failed to make a move:", error);
+        setMakeUnClickable(false); // Re-enable clicking if there's an error
+      }
+    }
+
+		
 	};
 
 	function calculateWinner(squares) {
@@ -101,11 +180,11 @@ function Board({gameId,player,comingFrom,player2Joined}) {
 	}
 
 	const renderSquare = (i) => {
-		return <Square value={squares[i]} onClick={() => handleClick(i)} />;
+		return <Square value={squares[i]} onClick={() =>handleClick(i)} makeUnClickable={makeUnClickable} setMakeUnClickable={setMakeUnClickable} />;
 	};
 
 	const winner = calculateWinner(squares);
-	const status = winner ? `Winner: ${winner}` : `Next Move: ${isXNext ? "X" : "O"}`;
+	// const status = winner ? `Winner: ${winner}` : `Next Move: ${isXNext ? "X" : "O"}`;
 
 	return (
 		<div className="flex flex-col justify-center text-center">
@@ -125,13 +204,12 @@ function Board({gameId,player,comingFrom,player2Joined}) {
 					</div>
 				))}
 				<div className="col-span-3 mt-4 text-center">
-					{status}
+					
 				</div>
 			</div>
 		</div>
 	);
 }
 
-// Add the calculateWinner function here...
 
 export default Board;
