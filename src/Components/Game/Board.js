@@ -21,6 +21,8 @@ function Board({gameId,comingFrom,player2Joined}) {
 	const[win, setWin]=useState(-1)
 	const ethers = require('ethers')
 	const dispatch=useDispatch()
+	const[claimRewardsClick, setclaimRewardsClick]=useState(false)
+	const[number_of_clicks,setNumber_of_clicks]=useState(0)
 
 	useEffect(()=>{
 		
@@ -110,6 +112,8 @@ function Board({gameId,comingFrom,player2Joined}) {
 	};
 
 	const handleWinner=async()=>{
+		setclaimRewardsClick(true)
+		setNumber_of_clicks(prev=>prev+1)
 		if(contract){
 			try{
 				 // Sending the transaction
@@ -122,8 +126,11 @@ function Board({gameId,comingFrom,player2Joined}) {
 				 
 				//  const receipt = await transaction.wait();
 				 console.log(transaction)
+				 setclaimRewardsClick(false)
+				 setNumber_of_clicks(prev=>prev+1)
 			}
-			catch(error){console.log("Failed to send the rewards "+error)}
+			catch(error){console.log("Failed to send the rewards "+error); setclaimRewardsClick(false);
+			setNumber_of_clicks(prev=>prev+1)}
 		}
 	}
 
@@ -190,11 +197,11 @@ function Board({gameId,comingFrom,player2Joined}) {
 	return (
 		<div className="flex flex-col justify-center text-center">
 			<div>{comingFrom==="start"?
-							(player2Joined===true?(<>Player 2 successfully Joined The game</>)
+							(player2Joined===true?(<><p>Player 2 successfully Joined The game</p><p>You are "X"</p></>)
 								:
 								<>{`Let the Player 2 Join! Send this GameId: ${gameId} to Player2`}</>)
 							:
-							(<>Welcome Player2 </>)}
+							(<><p>Welcome Player2</p><p>You are "O"</p></>)}
 			</div>
 			<div>{`Game Id. ${gameId}`}</div>
 			<div className="w-64 h-64 grid grid-cols-3">
@@ -209,9 +216,9 @@ function Board({gameId,comingFrom,player2Joined}) {
 				{ 
 				Number(win)===-1?(comingFrom==="start"?(rounds%2===0?"Your Turn":"Let the Player 2 make a move")
 									:(rounds%2===0?"Let the Player 1 to make a move":"Your Turn"))
-					:( Number(win)===1?(comingFrom==="start"?<ClaimReward click={handleWinner}/>:"You Lost it!")
-						:( Number(win)===2?(comingFrom==="start"?"You Lost it!":<ClaimReward click={handleWinner}/>)
-							:( Number(win)===3&&"Its a draw")))
+					:( Number(win)===1?(comingFrom==="start"?<ClaimReward click={handleWinner} setclaimRewardsClick={setclaimRewardsClick} claimRewardsClick={claimRewardsClick} number_of_clicks={number_of_clicks}/>:"You Lost it! Close the Tab now!")
+						:( Number(win)===2?(comingFrom==="start"?"You Lost it! Close the Tab now!":<ClaimReward click={handleWinner} setclaimRewardsClick={setclaimRewardsClick} claimRewardsClick={claimRewardsClick} number_of_clicks={number_of_clicks}/>)
+							:( Number(win)===3&&"Its a draw, close the tab now!")))
 				}
 				</div>
 			</div>
