@@ -1,18 +1,25 @@
 import React, { useEffect, useState } from "react";
 import Square from "./Square";
+import { ethers } from "ethers";
 import { useDispatch, useSelector } from 'react-redux';
 import { setPlayer1Address, setPlayer2Address } from "../Redux/DataSlice";
+import ClaimReward from "./ClaimReward";
+import { utils } from "web3";
+
+
 
 function Board({gameId,comingFrom,player2Joined}) {
 	const [squares, setSquares] = useState(Array(9).fill(null));	
 	const contract = useSelector((state) => state.data.contract);
 	const webSocketContract = useSelector((state) => state.data.webSocketContract);
+	const provider = useSelector((state) => state.data.webSocketContract);
 	const player1Address=useSelector((state)=>state.data.player1Address)
 	const player2Address=useSelector((state)=>state.data.player2Address)
 	const[rounds, setRounds]=useState(0)
 	const[whichPlayer,setWhichPlayer]=useState('')
 	const[makeUnClickable,setMakeUnClickable]=useState(false)
-	
+	const[win, setWin]=useState(-1)
+	const ethers = require('ethers')
 	const dispatch=useDispatch()
 
 	useEffect(()=>{
@@ -59,6 +66,8 @@ function Board({gameId,comingFrom,player2Joined}) {
 		const handleWinner= (gameId, winner, reward) => {
 			console.log("BoardHaveWinner")
 			console.log(`hey this is gameId: ${gameId} and the winner is ${winner} and the amount is ${reward}`)
+			setWin(winner)
+			setMakeUnClickable(true)
 
 		}
 
@@ -99,6 +108,24 @@ function Board({gameId,comingFrom,player2Joined}) {
 			}
 		}
 	};
+
+	const handleWinner=async()=>{
+		if(contract){
+			try{
+				 // Sending the transaction
+				 console.log(typeof gameId)
+				 const overrides = {
+					value: '2000'
+					};
+					// ethers.utils.parseUnits(amountInEther, "ether");
+				 const transaction = await  contract.claimRewards(ethers.toBigInt('2000'));
+				 
+				//  const receipt = await transaction.wait();
+				 console.log(transaction)
+			}
+			catch(error){console.log("Failed to send the rewards "+error)}
+		}
+	}
 
 	
 	const handleClick =  (i) => {
@@ -146,7 +173,7 @@ function Board({gameId,comingFrom,player2Joined}) {
 			const [a, b, c] = lines[i];
 			if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
 				console.log("winner mil gya")
-				// setMakeUnClickable(true)
+				
 				return squares[a];
 			}
 		}
@@ -178,7 +205,14 @@ function Board({gameId,comingFrom,player2Joined}) {
 					</div>
 				))}
 				<div className="col-span-3 mt-4 text-center">
-				{comingFrom==="start"?(rounds%2===0?"Your Turn":"Let the Player 2 make a move"):(rounds%2===0?"Let the Player 1 to make a move":"Your Turn")}
+				{console.log(typeof Number(win))}
+				{ 
+				Number(win)===-1?(comingFrom==="start"?(rounds%2===0?"Your Turn":"Let the Player 2 make a move")
+									:(rounds%2===0?"Let the Player 1 to make a move":"Your Turn"))
+					:( Number(win)===1?(comingFrom==="start"?<ClaimReward click={handleWinner}/>:"You Lost it!")
+						:( Number(win)===2?(comingFrom==="start"?"You Lost it!":<ClaimReward click={handleWinner}/>)
+							:( Number(win)===3&&"Its a draw")))
+				}
 				</div>
 			</div>
 		</div>

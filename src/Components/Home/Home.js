@@ -66,11 +66,11 @@ const Home = () => {
 						
 			const provider = new Web3Provider(window.ethereum)
 			const signer = provider.getSigner();
-			const contract = new ethers.Contract("0xae4a69b66f131a4e86da78f83f32c66e75ce329b", contarctABI, signer);
+			const contract = new ethers.Contract("0xaE4A69B66F131a4E86Da78F83f32c66E75CE329b", contarctABI, signer);
 
 			const infuraWss = `wss://sepolia.infura.io/ws/v3/79a999fa3be34292b5d14e4c07aa2228`;
 			const websocketProvider = new WebSocketProvider(infuraWss);
-			const webSocketContract = new ethers.Contract("0xae4a69b66f131a4e86da78f83f32c66e75ce329b", contarctABI, websocketProvider.getSigner());
+			const webSocketContract = new ethers.Contract("0xaE4A69B66F131a4E86Da78F83f32c66E75CE329b", contarctABI, websocketProvider.getSigner());
 
 			setProvider(provider);
 			dispatch(setProviders(provider))
